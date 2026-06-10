@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Подбор займа за 60 секунд</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0d0f1a;
+    --card: #161929;
+    --border: #252a40;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --gold: #ffd166;
+    --green: #06d6a0;
+    --text: #e8eaf6;
+    --muted: #7b80a0;
+    --radius: 18px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  .stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(108,99,255,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(255,101,132,0.06) 0%, transparent 50%);
+  }
+
+  .container {
+    width: 100%; max-width: 480px;
+    position: relative; z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+    animation: fadeDown 0.6s ease;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 13px; font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .logo-badge .dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  .header h1 {
+    font-size: 28px; font-weight: 900;
+    line-height: 1.2;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header p { color: var(--muted); font-size: 15px; }
+
+  /* PROGRESS */
+  .progress-wrap {
+    margin-bottom: 20px;
+    animation: fadeDown 0.6s ease 0.1s both;
+  }
+  .progress-info {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* XP BAR */
+  .xp-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+    animation: fadeDown 0.6s ease 0.15s both;
+  }
+  .xp-label {
+    font-size: 12px; font-weight: 700;
+    color: var(--gold);
+    white-space: nowrap;
+    min-width: 55px;
+  }
+  .xp-track {
+    flex: 1; height: 8px;
+    background: var(--border);
+    border-radius: 100px; overflow: hidden;
+  }
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), #ff9f1c);
+    border-radius: 100px;
+    transition: width 0.6s ease;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    margin-bottom: 16px;
+    animation: slideUp 0.5s ease;
+  }
+
+  .question-emoji {
+    font-size: 40px;
+    text-align: center;
+    margin-bottom: 16px;
+    display: block;
+    animation: bounce 0.6s ease;
+  }
+
+  .question-text {
+    font-size: 20px; font-weight: 700;
+    text-align: center;
+    line-height: 1.4;
+    margin-bottom: 24px;
+    color: #fff;
+  }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 15px; font-weight: 600;
+    color: var(--text);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  .option:hover {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.08);
+    transform: translateX(4px);
+  }
+  .option.selected {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.15);
+  }
+  .option-icon {
+    font-size: 24px;
+    min-width: 32px;
+    text-align: center;
+  }
+  .option-ripple {
+    position: absolute; top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(108,99,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    transition: width 0.4s, height 0.4s, opacity 0.4s;
+    opacity: 0;
+  }
+  .option:active .option-ripple {
+    width: 300px; height: 300px; opacity: 0;
+  }
+
+  /* ACHIEVEMENT TOAST */
+  .toast {
+    position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: linear-gradient(135deg, var(--gold), #ff9f1c);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; gap: 8px;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    z-index: 1000;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* RESULT */
+  .result { animation: slideUp 0.6s ease; }
+
+  .result-header {
+    text-align: center;
+    padding: 32px 24px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 56px; display: block; margin-bottom: 12px; }
+  .result-title {
+    font-size: 22px; font-weight: 900; color: #fff;
+    margin-bottom: 8px;
+  }
+  .result-subtitle { color: var(--muted); font-size: 15px; }
+
+  .profile-tags {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center;
+    margin: 16px 0;
+  }
+  .tag {
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 100px;
+    padding: 4px 12px;
+    font-size: 13px; font-weight: 600;
+    color: var(--accent);
+  }
+
+  .loans-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .loan-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+    text-decoration: none;
+    display: block;
+    color: var(--text);
+  }
+  .loan-card:hover { border-color: var(--accent); }
+
+  .loan-card.top {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(255,209,102,0.08), rgba(255,159,28,0.05));
+  }
+
+  .loan-top-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--gold);
+    color: #000;
+    font-size: 11px; font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .loan-header {
+    display: flex; justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .loan-name {
+    font-size: 18px; font-weight: 800;
+    color: #fff;
+  }
+  .loan-match {
+    font-size: 13px; font-weight: 700;
+    color: var(--green);
+    background: rgba(6,214,160,0.1);
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .loan-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat { text-align: center; }
+  .stat-value {
+    font-size: 16px; font-weight: 800; color: #fff;
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px; color: var(--muted);
+    display: block; margin-top: 2px;
+  }
+
+  .loan-features {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 16px;
+  }
+  .feature {
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  .loan-btn {
+    display: block; width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border: none; border-radius: 12px;
+    color: #fff; font-size: 16px; font-weight: 700;
+    text-align: center; cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    text-decoration: none;
+  }
+  .loan-btn:hover { opacity: 0.9; }
+  .loan-btn:active { transform: scale(0.98); }
+  .loan-btn.gold {
+    background: linear-gradient(135deg, var(--gold), #ff9f1c);
+    color: #000;
+  }
+
+  .restart-btn {
+    display: block; width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--muted); font-size: 15px; font-weight: 600;
+    text-align: center; cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s;
+  }
+  .restart-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  /* SCORE */
+  .score-display {
+    display: flex; align-items: center;
+    justify-content: center; gap: 8px;
+    margin: 20px 0;
+    font-size: 15px; color: var(--muted);
+  }
+  .score-num {
+    font-size: 32px; font-weight: 900;
+    color: var(--gold);
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  @keyframes confetti {
+    0% { transform: translateY(0) rotate(0); opacity: 1; }
+    100% { transform: translateY(100px) rotate(720deg); opacity: 0; }
+  }
+
+  .confetti-piece {
+    position: fixed;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    animation: confetti 0.8s ease forwards;
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<div class="toast" id="toast">🏆 <span id="toastText"></span></div>
+
+<div class="container">
+  <div class="header">
+    <div class="logo-badge">
+      <span class="dot"></span>
+      Подбор займа · 60 секунд
+    </div>
+    <h1>Найди свой идеальный займ</h1>
+    <p>Ответь на 6 вопросов и получи персональный подбор</p>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-info">
+      <span id="qLabel">Вопрос 1 из 6</span>
+      <span id="qPercent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="xp-bar" id="xpBar">
+    <div class="xp-label">⚡ XP: <span id="xpNum">0</span></div>
+    <div class="xp-track">
+      <div class="xp-fill" id="xpFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    emoji: "💰",
+    text: "Сколько тебе нужно денег?",
+    key: "amount",
+    options: [
+      { icon: "🪙", text: "До 5 000 руб.", value: "small" },
+      { icon: "💵", text: "5 000 – 15 000 руб.", value: "medium" },
+      { icon: "💳", text: "15 000 – 30 000 руб.", value: "large" },
+      { icon: "🏦", text: "Больше 30 000 руб.", value: "xlarge" },
+    ]
+  },
+  {
+    emoji: "⚡",
+    text: "Как срочно нужны деньги?",
+    key: "speed",
+    options: [
+      { icon: "🚀", text: "Прямо сейчас (до часа)", value: "instant" },
+      { icon: "📅", text: "Сегодня", value: "today" },
+      { icon: "🗓️", text: "Завтра не горит", value: "tomorrow" },
+    ]
+  },
+  {
+    emoji: "📊",
+    text: "Какая у тебя кредитная история?",
+    key: "credit",
+    options: [
+      { icon: "✅", text: "Хорошая, без просрочек", value: "good" },
+      { icon: "⚠️", text: "Были небольшие просрочки", value: "average" },
+      { icon: "❌", text: "Плохая или нулевая", value: "bad" },
+      { icon: "🤷", text: "Не знаю", value: "unknown" },
+    ]
+  },
+  {
+    emoji: "📱",
+    text: "Куда хочешь получить деньги?",
+    key: "receive",
+    options: [
+      { icon: "💳", text: "На карту любого банка", value: "card" },
+      { icon: "📲", text: "На Тинькофф / Сбер", value: "sber_tink" },
+      { icon: "💸", text: "На кошелёк (QIWI, ЮМани)", value: "wallet" },
+      { icon: "💵", text: "Наличными (офис)", value: "cash" },
+    ]
+  },
+  {
+    emoji: "📆",
+    text: "На какой срок нужен займ?",
+    key: "term",
+    options: [
+      { icon: "⚡", text: "До 30 дней", value: "short" },
+      { icon: "📅", text: "1 – 3 месяца", value: "medium" },
+      { icon: "🗓️", text: "3 – 12 месяцев", value: "long" },
+    ]
+  },
+  {
+    emoji: "🎯",
+    text: "Ты уже брал займы в МФО раньше?",
+    key: "experience",
+    options: [
+      { icon: "🆕", text: "Нет, первый раз", value: "new" },
+      { icon: "👍", text: "Да, брал и вернул вовремя", value: "experienced" },
+      { icon: "😅", text: "Брал, были задержки", value: "delayed" },
+    ]
+  }
+];
+
+// МФО с реф ссылками — ЗАМЕНИ НА СВОИ РЕАЛЬНЫЕ ССЫЛКИ
+const mfoData = [
+  {
+    id: "займер",
+    name: "Займер",
+    emoji: "🟣",
+    maxAmount: 30000,
+    rate: "0% первый займ",
+    term: "до 30 дней",
+    approval: "97%",
+    speed: "5 мин",
+    features: ["✓ Без отказов", "✓ Первый 0%", "✓ Любая карта"],
+    link: "https://zaymer.ru/?partner=ТВОЙ_РЕФ_КОД",
+    tags: ["new", "bad", "unknown", "instant", "today"],
+  },
+  {
+    id: "манимен",
+    name: "МаниМен",
+    emoji: "🟡",
+    maxAmount: 30000,
+    rate: "от 0.8%/день",
+    term: "до 18 мес",
+    approval: "94%",
+    speed: "15 мин",
+    features: ["✓ Длинные сроки", "✓ Плохая КИ", "✓ Кошельки"],
+    link: "https://moneyman.ru/?utm_source=ТВОЙ_РЕФ_КОД",
+    tags: ["bad", "unknown", "average", "long", "wallet", "delayed"],
+  },
+  {
+    id: "екапуста",
+    name: "еКапуста",
+    emoji: "🟢",
+    maxAmount: 30000,
+    rate: "0% первый займ",
+    term: "до 21 дня",
+    approval: "95%",
+    speed: "10 мин",
+    features: ["✓ Первый 0%", "✓ Без справок", "✓ Быстро"],
+    link: "https://ekapusta.com/?ref=ТВОЙ_РЕФ_КОД",
+    tags: ["new", "small", "medium", "instant", "today", "card"],
+  },
+  {
+    id: "турбозайм",
+    name: "ТурбоЗайм",
+    emoji: "🔴",
+    maxAmount: 50000,
+    rate: "от 0.5%/день",
+    term: "до 12 мес",
+    approval: "92%",
+    speed: "мгновенно",
+    features: ["✓ До 50 000 руб.", "✓ Крупные суммы", "✓ Долгий срок"],
+    link: "https://turbozaim.ru/?pid=ТВОЙ_РЕФ_КОД",
+    tags: ["large", "xlarge", "long", "medium_term", "experienced", "good"],
+  },
+  {
+    id: "веббанкир",
+    name: "Веббанкир",
+    emoji: "🔵",
+    maxAmount: 100000,
+    rate: "от 0.4%/день",
+    term: "до 365 дней",
+    approval: "90%",
+    speed: "20 мин",
+    features: ["✓ До 100 000 руб.", "✓ Хорошая КИ", "✓ Низкая ставка"],
+    link: "https://webbankiroff.ru/?utm_partner=ТВОЙ_КОД",
+    tags: ["xlarge", "large", "good", "long", "card", "sber_tink"],
+  },
+  {
+    id: "lime",
+    name: "Лайм-Займ",
+    emoji: "🟠",
+    maxAmount: 70000,
+    rate: "0% первый займ",
+    term: "до 168 дней",
+    approval: "93%",
+    speed: "10 мин",
+    features: ["✓ Первый 0%", "✓ Пролонгация", "✓ Любая КИ"],
+    link: "https://lime.credit/?ref=ТВОЙ_РЕФ_КОД",
+    tags: ["new", "average", "medium", "large", "today", "card", "sber_tink"],
+  }
+];
+
+let answers = {};
+let currentQ = 0;
+let xp = 0;
+let score = 0;
+
+const achievements = [
+  { after: 1, text: "+50 XP! Отличный старт! 🎯" },
+  { after: 3, text: "+100 XP! Половина пути! ⚡" },
+  { after: 5, text: "+150 XP! Почти готово! 🔥" },
+];
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function addXP(amount) {
+  xp += amount;
+  score += amount;
+  document.getElementById('xpNum').textContent = xp;
+  const pct = Math.min((xp / 600) * 100, 100);
+  document.getElementById('xpFill').style.width = pct + '%';
+}
+
+function spawnConfetti(x, y) {
+  const colors = ['#6c63ff','#ffd166','#06d6a0','#ff6584','#fff'];
+  for (let i = 0; i < 8; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = (x + (Math.random()-0.5)*80) + 'px';
+    el.style.top = y + 'px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDelay = (Math.random()*0.3) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  const pct = Math.round((currentQ / questions.length) * 100);
+
+  document.getElementById('qLabel').textContent = `Вопрос ${currentQ+1} из ${questions.length}`;
+  document.getElementById('qPercent').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `
+    <div class="card">
+      <span class="question-emoji">${q.emoji}</span>
+      <div class="question-text">${q.text}</div>
+      <div class="options">
+        ${q.options.map((opt, i) => `
+          <button class="option" onclick="selectOption('${opt.value}', ${i}, this)" data-val="${opt.value}">
+            <span class="option-icon">${opt.icon}</span>
+            <span>${opt.text}</span>
+            <div class="option-ripple"></div>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function selectOption(value, idx, btn) {
+  answers[questions[currentQ].key] = value;
+
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  const rect = btn.getBoundingClientRect();
+  spawnConfetti(rect.left + rect.width/2, rect.top);
+
+  addXP(100);
+
+  const achievement = achievements.find(a => a.after === currentQ + 1);
+  if (achievement) setTimeout(() => showToast(achievement.text), 300);
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ >= questions.length) {
+      showResult();
+    } else {
+      renderQuestion();
+    }
+  }, 400);
+}
+
+function matchLoans() {
+  const scored = mfoData.map(mfo => {
+    let pts = 0;
+    const a = answers;
+
+    // Сумма
+    if (a.amount === 'small' && mfo.maxAmount >= 5000) pts += 2;
+    if (a.amount === 'medium' && mfo.maxAmount >= 15000) pts += 2;
+    if (a.amount === 'large' && mfo.maxAmount >= 30000) pts += 2;
+    if (a.amount === 'xlarge' && mfo.maxAmount >= 50000) pts += 3;
+
+    // Теги
+    Object.values(a).forEach(val => {
+      if (mfo.tags.includes(val)) pts += 2;
+    });
+
+    // Новичок → бонус за 0%
+    if (a.experience === 'new' && mfo.rate.includes('0%')) pts += 3;
+
+    // Плохая КИ
+    if ((a.credit === 'bad' || a.credit === 'unknown') && mfo.tags.includes('bad')) pts += 3;
+
+    return { ...mfo, pts };
+  });
+
+  return scored.sort((a, b) => b.pts - a.pts).slice(0, 3);
+}
+
+function getProfile() {
+  const a = answers;
+  const tags = [];
+
+  if (a.experience === 'new') tags.push('Новый клиент');
+  if (a.credit === 'bad') tags.push('Любая КИ');
+  if (a.credit === 'good') tags.push('Хорошая КИ');
+  if (a.speed === 'instant') tags.push('Срочно');
+  if (a.amount === 'xlarge' || a.amount === 'large') tags.push('Крупная сумма');
+  if (a.term === 'long') tags.push('Длинный срок');
+
+  return tags;
+}
+
+function matchPct(pts) {
+  const max = 14;
+  return Math.min(Math.round((pts / max) * 100), 99) + '%';
+}
+
+function showResult() {
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('xpBar').style.display = 'none';
+  document.querySelector('.header').style.display = 'none';
+
+  const loans = matchLoans();
+  const profile = getProfile();
+
+  spawnConfetti(window.innerWidth/2, 200);
+  setTimeout(() => spawnConfetti(window.innerWidth/2, 200), 300);
+
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `
+    <div class="result">
+      <div class="result-header">
+        <span class="result-emoji">🎯</span>
+        <div class="result-title">Твой профиль готов!</div>
+        <div class="result-subtitle">Подобрали ${loans.length} варианта специально для тебя</div>
+        <div class="profile-tags">
+          ${profile.map(t => `<span class="tag">${t}</span>`).join('')}
+          <span class="tag">⚡ XP: ${xp}</span>
+        </div>
+      </div>
+
+      <div class="loans-title">🏆 Лучшие предложения для тебя</div>
+
+      ${loans.map((loan, i) => `
+        <div class="loan-card ${i === 0 ? 'top' : ''}">
+          ${i === 0 ? '<div class="loan-top-badge">🥇 Лучший выбор</div>' : ''}
+          <div class="loan-header">
+            <div class="loan-name">${loan.emoji} ${loan.name}</div>
+            <div class="loan-match">${matchPct(loan.pts)} совпадение</div>
+          </div>
+          <div class="loan-stats">
+            <div class="stat">
+              <span class="stat-value">${loan.rate}</span>
+              <span class="stat-label">Ставка</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">${loan.approval}</span>
+              <span class="stat-label">Одобрение</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">${loan.speed}</span>
+              <span class="stat-label">Скорость</span>
+            </div>
+          </div>
+          <div class="loan-features">
+            ${loan.features.map(f => `<div class="feature">${f}</div>`).join('')}
+          </div>
+          <a href="${loan.link}" target="_blank" class="loan-btn ${i === 0 ? 'gold' : ''}">
+            ${i === 0 ? '🚀 Получить займ →' : 'Подать заявку →'}
+          </a>
+        </div>
+      `).join('')}
+
+      <button class="restart-btn" onclick="restart()">🔄 Пройти заново</button>
+    </div>
+  `;
+}
+
+function restart() {
+  answers = {}; currentQ = 0; xp = 0; score = 0;
+  document.getElementById('xpNum').textContent = '0';
+  document.getElementById('xpFill').style.width = '0%';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('xpBar').style.display = 'flex';
+  document.querySelector('.header').style.display = 'block';
+  renderQuestion();
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
